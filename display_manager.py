@@ -66,6 +66,16 @@ class VirtualDisplayDriver(DisplayDriver):
 class EPaperDisplayDriver(DisplayDriver):
     """E-paper display driver (Waveshare compatible)."""
     
+    # Mapping of model names to their import modules
+    EPAPER_MODELS = {
+        'epd2in13_V2': 'epd2in13_V2',
+        'epd2in13_V3': 'epd2in13_V3',
+        'epd2in7': 'epd2in7',
+        'epd2in9': 'epd2in9',
+        'epd4in2': 'epd4in2',
+        'epd7in5': 'epd7in5',
+    }
+    
     def __init__(self, width: int, height: int, model: str = "epd2in13_V2"):
         super().__init__(width, height)
         self.model = model
@@ -73,17 +83,18 @@ class EPaperDisplayDriver(DisplayDriver):
         
         try:
             # Try to import waveshare e-paper library
-            # This will fail on non-Raspberry Pi systems
-            if model == "epd2in13_V2":
-                from waveshare_epd import epd2in13_V2
-                self.epd = epd2in13_V2.EPD()
-            elif model == "epd2in7":
-                from waveshare_epd import epd2in7
-                self.epd = epd2in7.EPD()
+            if model in self.EPAPER_MODELS:
+                module_name = self.EPAPER_MODELS[model]
+                module = __import__(f'waveshare_epd.{module_name}', fromlist=[module_name])
+                epd_class = getattr(module, 'EPD')
+                self.epd = epd_class()
             else:
                 logger.warning(f"Unknown e-paper model: {model}, using virtual display")
         except ImportError:
             logger.warning("Waveshare e-paper library not found, using virtual display")
+            self.epd = None
+        except Exception as e:
+            logger.warning(f"Error initializing e-paper display: {e}, using virtual display")
             self.epd = None
     
     def init(self):
@@ -269,11 +280,12 @@ class DisplayManager:
         lines = []
         current_line = []
         
+        # Create a single temporary draw object for all measurements
+        temp_image = Image.new('L', (1, 1))
+        temp_draw = ImageDraw.Draw(temp_image)
+        
         for word in words:
             test_line = ' '.join(current_line + [word])
-            # Create a temporary draw object to measure text
-            temp_image = Image.new('L', (1, 1))
-            temp_draw = ImageDraw.Draw(temp_image)
             bbox = temp_draw.textbbox((0, 0), test_line, font=font)
             width = bbox[2] - bbox[0]
             

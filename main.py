@@ -24,12 +24,16 @@ from display_manager import DisplayManager
 from config import Config
 
 # Setup logging
+log_dir = Path.home() / '.local' / 'share' / 'spotifyd-display'
+log_dir.mkdir(parents=True, exist_ok=True)
+log_file = log_dir / 'spotifyd-display.log'
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler('/tmp/spotifyd-display.log')
+        logging.FileHandler(log_file)
     ]
 )
 logger = logging.getLogger(__name__)
@@ -206,9 +210,13 @@ class SpotifydDisplay:
         if metadata.get('status') != self.last_metadata.get('status'):
             return True
         
-        # Update progress bar periodically during playback
+        # Update progress bar periodically during playback (only if position changed significantly)
         if metadata.get('status') == 'Playing':
-            return True
+            # Only update if position changed by more than 2 seconds to reduce e-paper wear
+            current_pos = metadata.get('position', 0) // 1000000
+            last_pos = self.last_metadata.get('position', 0) // 1000000
+            if abs(current_pos - last_pos) >= 2:
+                return True
         
         return False
 
