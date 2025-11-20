@@ -1,0 +1,15 @@
+# Core dependencies
+pydbus>=0.6.0
+PyGObject>=3.42.0
+
+# Display drivers
+Pillow>=9.0.0
+# Uncomment for specific e-paper display support (Waveshare)
+# waveshare-epd>=1.0.0
+
+# For SPI displays (optional)
+# spidev>=3.5
+# RPi.GPIO>=0.7.1
+
+# System integration
+python-daemon>=2.3.0

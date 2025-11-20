@@ -1,0 +1,8 @@
+{
+  "display_type": "virtual",
+  "display_width": 250,
+  "display_height": 122,
+  "epaper_model": "epd2in13_V2",
+  "update_interval": 1.0,
+  "log_level": "INFO"
+}
